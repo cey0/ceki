@@ -1,0 +1,1 @@
+const detailjoki = document.getElementById()

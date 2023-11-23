@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=REM&family=Roboto+Slab:wght@500&display=swap');
+:root {
+  --unguDark: #11009E;
+  --unguLight: #4942E4;
+  --blue:#8696FE;
+  --pink:#C4B0FF;
+}
+*{
+  font-family: 'REM';
+}
+.navbar a:not(.navbar-brand,.btn) {
+  position: relative;
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s, border-bottom-color 0.3s; 
+}
+
+.navbar a:not(.navbar-brand,.btn)::before {
+  content: "";
+  position: absolute;
+  bottom: -3px; 
+  left: 0;
+  width: 100%;
+  height: 2px; 
+  background-color: transparent;
+  transition: background-color 0.3s;
+}
+
+.navbar a:not(.navbar-brand,.btn):hover {
+  color: var(--unguDark); 
+}
+
+.navbar a:not(.navbar-brand,.btn):hover::before {
+  background-color: var(--unguDark);
+}
+
+.navbar{
+  background-color: var(--unguLight);
+  z-index: 11111;
+}
+#navbar{
+position: fixed;
+  width: 100%;
+  transition: top 0.3s;
+}
