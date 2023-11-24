@@ -56,6 +56,7 @@ width: 1024px;
 .navbar{
     background-color: var(--unguLight);
     z-index: 11111;
+    top: 0;
 }
 #navbar{
   position: fixed;

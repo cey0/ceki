@@ -181,6 +181,24 @@ app.get("/catalogdata", async (req, res) => {
   }
 });
 
+// Route untuk register
+app.post("/catalogdata", async (req, res) => {
+  try {
+    const { nama,harga } = req.body;
+
+    // Buat user baru menggunakan data dari form
+    const newCat = new catalog({
+      nama,
+      harga
+    });
+
+    const Cat = await newCat.save();
+    res.status(200).json({ message: "catalog successfully added", Cat });
+  } catch (error) {
+    console.error("Error creating catalog:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 
 

@@ -43,3 +43,12 @@ position: fixed;
   width: 100%;
   transition: top 0.3s;
 }
+.catalog{
+  position: relative;
+  inset: 0;
+  margin-inline: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
