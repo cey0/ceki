@@ -7,7 +7,7 @@ const pembayaranSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  TugasP: {
+  deskripsi: {
     type: String,
     required: true
   }

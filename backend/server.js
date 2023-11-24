@@ -187,11 +187,12 @@ app.get("/catalogdata", async (req, res) => {
 // Route untuk register
 app.post("/catalogdata", async (req, res) => {
   try {
-    const { nama,harga } = req.body;
+    const { nama,desk,harga } = req.body;
 
     // Buat user baru menggunakan data dari form
     const newCat = new catalog({
       nama,
+      desk,
       harga
     });
 
@@ -202,6 +203,44 @@ app.post("/catalogdata", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+app.post("/pembayaran", async (req, res) => {
+  try {
+    const { tugasT,tugasP } = req.body;
+
+    // Buat user baru menggunakan data dari form
+    const newbayar = new pembayaranM({
+      tugasT,
+      deskripsi,
+    });
+
+    const bayar = await newbayar.save();
+    res.status(200).json({ message: "pembayaran successfully added",  });
+  } catch (error) {
+    console.error("Error creating catalog:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+// Route untuk halaman_baru.html
+app.get('/pembayaran', async (req, res) => {
+  const selectedCatalogId = req.query.id; // Mengambil ID dari URL menggunakan query string
+
+  try {
+    const catalogData = await catalogM.findById(selectedCatalogId); // Mencari data katalog berdasarkan ID
+
+    // Jika data katalog ditemukan, kirimkan ke halaman baru
+    if (catalogData) {
+      res.render('pembayaran', { catalogData }); // Misalnya menggunakan templating engine seperti EJS
+    } else {
+      // Jika data tidak ditemukan, kirimkan pesan error atau arahkan ke halaman lain
+      res.status(404).send('Catalog data not found');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Error fetching catalog data');
+  }
+});
+
+module.exports = app;
 
 
 

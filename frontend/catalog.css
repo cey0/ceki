@@ -61,6 +61,7 @@ position: fixed;
 .catalog-item{
   width: 330px;
 }
+
 @media (max-width: 780px){
   .catalog {
     flex-direction: column;

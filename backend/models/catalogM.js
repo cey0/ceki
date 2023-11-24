@@ -7,6 +7,11 @@ const catalogSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  desk: {
+    type : String,
+    required: true
+
+  },
   harga: {
     type: Number,
     required: true
