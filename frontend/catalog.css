@@ -50,5 +50,22 @@ position: fixed;
   display: flex;
   justify-content: center;
   align-items: center;
-
+}
+.catalog-card{
+  background-color: var(--unguLight);
+  color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 81px;
+}
+.catalog-item{
+  width: 330px;
+}
+@media (max-width: 780px){
+  .catalog {
+    flex-direction: column;
+  }
+  .catalog-card{
+    margin-top: 30px;
+  }
 }

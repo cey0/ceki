@@ -6,6 +6,9 @@ const userM = require('./models/userM');
 const session = require('express-session');
 const path = require('path');
 const catalog = require("./models/catalogM")
+const multer = require('multer');
+const pembayaranM = require("./models/pembayaranM");
+
 
 const app = express();
 
@@ -199,6 +202,11 @@ app.post("/catalogdata", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+
+
+
+
 
 
 
