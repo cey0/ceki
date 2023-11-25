@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Skema untuk model pengguna
 const tugasSchema = new mongoose.Schema({
   tugas: {
     type: String,
@@ -8,33 +7,24 @@ const tugasSchema = new mongoose.Schema({
     unique: true
   },
   TugasDetail: {
-    type : String,
+    type: String,
     required: true
-
   },
   Nama: {
-    type:String,
-    required:true
+    type: String,
+    required: true
   },
-  tingkat:{
-    type : String,
-    required:true
+  tingkat: {
+    type: String,
+    required: true
   },
-    nama: {
-    type: Number,
-    required: true,
-    ref: 'catalog'
-  },
-  harga:{
-    type: Number,
-    required:true,
-    ref: 'catalog'
+  // Menggunakan ObjectId untuk merujuk ke model 'catalog'
+  catalogId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'catalog' // Nama model referensi
   }
-  
-
 });
 
-// Membuat model User berdasarkan skema
 const tugasM = mongoose.model('tugas', tugasSchema);
 
 module.exports = tugasM;

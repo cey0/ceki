@@ -1,23 +1,20 @@
-async function getCatalogById(catalogId) {
-    try {
-      const response = await axios.get(`http://localhost:3000/catalog/${catalogId}`);
-      return response.data;
-    } catch(error) {
-      console.error('Error fetching catalog by ID:', error);
-      return null;
-    }
-  }
-  
-  window.onload = () => {
-    fetch('/tugas') // Meminta data katalog dari endpoint yang sesuai
-      .then(response => response.json())
-      .then(data => {
-        if (data) {
-          // Mengisi nilai pada elemen input yang disembunyikan
-          document.getElementById('tipeInput').value = data.tipePaket;
-          document.getElementById('hargaInput').value = data.harga;
-        }
-      })
-      .catch(error => console.error('Error:', error));
-  };
+window.addEventListener("DOMContentLoaded", () => {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  const catalogId = urlParams.get('id');
 
+  console.log("Catalog ID:", catalogId);
+
+  axios.get(`http://localhost:3000/catalogdata/${catalogId}`)
+    .then(response => {
+      console.log("Catalog Data:", response.data);
+      const { nama, harga } = response.data;
+  
+      // Isi nilai dari catalog ke dalam input "Nama" dan "Harga"
+      document.getElementById("Nama").value = nama;
+      document.getElementById("harga").value = harga;
+    })
+    .catch(error => {
+      console.error("Error fetching catalog data:", error);
+    });
+});

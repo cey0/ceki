@@ -121,7 +121,7 @@ async function tampilcatalog() {
         console.log("Selected Catalog ID:", selectedCatalogId);
     
         // Redirect to pembayaran.html only if the selectedCatalogId is valid
-        window.location.href = `pembayaran.html?id=${selectedCatalogId}`;
+        window.location.href = `Ftugas.html?id=${selectedCatalogId}`;
       } else {
         console.error("No valid ID found for the selected catalog.");
         // Handle the situation where the ID is not available or invalid

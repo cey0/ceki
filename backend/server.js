@@ -7,7 +7,7 @@ const session = require('express-session');
 const path = require('path');
 const catalog = require("./models/catalogM")
 const multer = require('multer');
-const pembayaranM = require("./models/pembayaranM");
+const jokiM = require("./models/jokiM");
 
 
 const app = express();
@@ -25,8 +25,8 @@ app.use(session({
 
 mongoose.connect("mongodb+srv://nadra:nadra@cluster0.vy16fhl.mongodb.net/Cluster0retryWrites=true&w=majority").then(() => {
   console.log("Connected to MongoDB");
-  app.listen(4000, () => {
-    console.log(`Node API is running on http://localhost:${4000}`);
+  app.listen(3000, () => {
+    console.log(`Node API is running on http://localhost:${3000}`);
   });
 }).catch((e) => {
   console.log(e);
@@ -203,63 +203,76 @@ app.post("/catalogdata", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-app.post("/pembayaran", async (req, res) => {
+// Menambahkan endpoint untuk mengambil data katalog berdasarkan ID
+app.get("/catalogdata/:id", async (req, res) => {
   try {
-    const { tugasT,tugasP } = req.body;
+    const catalogId = req.params.id;
+    const catalogItem = await catalog.findById(catalogId);
 
-    // Buat user baru menggunakan data dari form
-    const newbayar = new pembayaranM({
-      tugasT,
-      deskripsi,
-    });
+    if (!catalogItem) {
+      return res.status(404).json({ message: "Catalog item not found" });
+    }
 
-    const bayar = await newbayar.save();
-    res.status(200).json({ message: "pembayaran successfully added",  });
+    res.status(200).json(catalogItem);
   } catch (error) {
-    console.error("Error creating catalog:", error);
+    console.error("Error fetching catalog item:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-// Route untuk halaman_baru.html
-app.get('/pembayaran', async (req, res) => {
-  const selectedCatalogId = req.query.id; // Mengambil ID dari URL menggunakan query string
 
+// Route untuk menambahkan tugas baru
+app.post("/addTugas", async (req, res) => {
   try {
-    const catalogData = await catalogM.findById(selectedCatalogId); // Mencari data katalog berdasarkan ID
+    const { tugas, TugasDetail, Nama, tingkat, catalogId } = req.body;
 
-    // Jika data katalog ditemukan, kirimkan ke halaman baru
-    if (catalogData) {
-      res.render('pembayaran', { catalogData }); // Misalnya menggunakan templating engine seperti EJS
-    } else {
-      // Jika data tidak ditemukan, kirimkan pesan error atau arahkan ke halaman lain
-      res.status(404).send('Catalog data not found');
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Error fetching catalog data');
-  }
-});
-// Endpoint untuk mendapatkan detail katalog berdasarkan ID
-app.get('/catalogdetail/:id', async (req, res) => {
-  try {
-    const catalogId = req.params.id;
-    const catalogDetail = await catalog.findById(catalogId);
-
-    if (!catalogDetail) {
-      return res.status(404).json({ error: 'Catalog not found' });
-    }
-
-    // Kirim data katalog detail
-    res.json({ 
-      nama: catalogDetail.nama,
-      harga: catalogDetail.harga
-      // tambahkan informasi lain yang ingin Anda kirimkan
+    // Buat tugas baru menggunakan data dari form
+    const newTugas = new jokiM({
+      tugas,
+      TugasDetail,
+      Nama,
+      tingkat,
+      catalogId // Anda akan menyimpan ObjectId untuk mengacu ke katalog tertentu di sini
     });
+
+    const addedTugas = await newTugas.save();
+    res.status(200).json({ message: "Tugas successfully added", addedTugas });
   } catch (error) {
-    console.error('Error fetching catalog detail by ID:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error creating tugas:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// Route untuk mendapatkan data tugas yang mencakup informasi dari catalog
+app.get("/tugasCatalogData", async (req, res) => {
+  try {
+    const tugasData = await tugasM.find().populate('catalogId', 'nama harga -_id');
+
+    if (!tugasData || tugasData.length === 0) {
+      return res.status(404).json({ message: "No tugas data found" });
+    }
+
+    // Ambil data nama dan harga dari setiap tugas yang mengacu pada catalog
+    const catalogDataInTugas = tugasData.map(tugas => ({
+      tugas: tugas.tugas,
+      TugasDetail: tugas.TugasDetail,
+      Nama: tugas.Nama,
+      tingkat: tugas.tingkat,
+      catalog: {
+        nama: tugas.catalogId ? tugas.catalogId.nama : null,
+        harga: tugas.catalogId ? tugas.catalogId.harga : null
+      }
+    }));
+
+    res.status(200).json({ catalogDataInTugas });
+  } catch (error) {
+    console.error("Error fetching tugas data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
 
 
 module.exports = app;
