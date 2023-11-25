@@ -115,10 +115,19 @@ async function tampilcatalog() {
       bsModal.show();
     });
     BuyB.addEventListener("click", (event) => {
-      const selectedCatalogId = event.target.getAttribute("data-catalog-id");
-      // Mengarahkan pengguna ke halaman baru dengan menggabungkan ID katalog dalam URL
-      window.location.href = `pembayaran.html?id=${selectedCatalogId}`;
+      const selectedCatalogId = catalog._id; // Assuming _id is the correct identifier
+      if (selectedCatalogId) {
+        // Debugging: Log the selectedCatalogId to ensure it's not undefined
+        console.log("Selected Catalog ID:", selectedCatalogId);
+    
+        // Redirect to pembayaran.html only if the selectedCatalogId is valid
+        window.location.href = `pembayaran.html?id=${selectedCatalogId}`;
+      } else {
+        console.error("No valid ID found for the selected catalog.");
+        // Handle the situation where the ID is not available or invalid
+      }
     });
+    
 
     // Event listener saat modal tertutup
     modal.addEventListener("hidden.bs.modal", () => {

@@ -1,0 +1,19 @@
+
+@import url('https://fonts.googleapis.com/css2?family=REM&family=Roboto+Slab:wght@500&display=swap');
+
+
+.form {
+    border: 1px solid #000000; /* Warna border */
+    border-radius: 0.25rem; /* Corner radius */
+    padding: 15px; /* Padding untuk menjaga jarak dari konten */
+    margin-bottom: 20px; /* Jarak antara setiap form-group */
+    background-color: var(--unguLight);
+    color: white;
+  }
+
+  :root {
+    --unguDark: #11009E;
+    --unguLight: #4942E4;
+    --blue:#8696FE;
+    --pink:#C4B0FF;
+}
