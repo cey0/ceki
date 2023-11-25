@@ -8,7 +8,8 @@ const path = require('path');
 const catalog = require("./models/catalogM")
 const multer = require('multer');
 const jokiM = require("./models/jokiM");
-
+const pembayaranM = require("./models/pembayaranM")
+const axios = require('axios');
 
 const app = express();
 
@@ -269,18 +270,23 @@ app.get("/tugasCatalogData", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+const clientId = 'e25465ea-dd6a-34a5-abc9-9f6e76655804';
+const clientSecret = 'ZK5qxnQfhmUaNaLEM7C5zMrdw2UHDZY5rzO12FWd';
 
-
-
-
-
-
+axios.post('https://api.yukk.me/v2/oauth/token', {
+  grant_type: 'client_credentials',
+  client_id: clientId,
+  client_secret: clientSecret
+}, {
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+})
+.then(response => {
+  console.log('Access token:', response.data.access_token);
+})
+.catch(error => {
+  console.error('Error:', error);
+});
 module.exports = app;
-
-
-
-
-
-
-
-
