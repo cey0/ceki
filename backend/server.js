@@ -25,8 +25,8 @@ app.use(session({
 
 mongoose.connect("mongodb+srv://nadra:nadra@cluster0.vy16fhl.mongodb.net/Cluster0retryWrites=true&w=majority").then(() => {
   console.log("Connected to MongoDB");
-  app.listen(3000, () => {
-    console.log(`Node API is running on http://localhost:${3000}`);
+  app.listen(4000, () => {
+    console.log(`Node API is running on http://localhost:${4000}`);
   });
 }).catch((e) => {
   console.log(e);
@@ -239,6 +239,28 @@ app.get('/pembayaran', async (req, res) => {
     res.status(500).send('Error fetching catalog data');
   }
 });
+// Endpoint untuk mendapatkan detail katalog berdasarkan ID
+app.get('/catalogdetail/:id', async (req, res) => {
+  try {
+    const catalogId = req.params.id;
+    const catalogDetail = await catalog.findById(catalogId);
+
+    if (!catalogDetail) {
+      return res.status(404).json({ error: 'Catalog not found' });
+    }
+
+    // Kirim data katalog detail
+    res.json({ 
+      nama: catalogDetail.nama,
+      harga: catalogDetail.harga
+      // tambahkan informasi lain yang ingin Anda kirimkan
+    });
+  } catch (error) {
+    console.error('Error fetching catalog detail by ID:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 module.exports = app;
 
