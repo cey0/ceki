@@ -1,3 +1,4 @@
+const midtransClient = require('midtrans-client');
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -8,9 +9,8 @@ const path = require('path');
 const catalog = require("./models/catalogM")
 const multer = require('multer');
 const jokiM = require("./models/jokiM");
-
-
 const app = express();
+
 
 app.use(express.json());
 app.use(cors());
@@ -219,54 +219,73 @@ app.get("/catalogdata/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-// Route untuk menambahkan tugas baru
-app.post("/addTugas", async (req, res) => {
+app.post("/addjoki", async (req, res) => {
   try {
-    const { tugas, TugasDetail, Nama, tingkat, catalogId } = req.body;
-
-    // Buat tugas baru menggunakan data dari form
-    const newTugas = new jokiM({
+    // Extract data from the request body
+    const {
       tugas,
       TugasDetail,
-      Nama,
       tingkat,
-      catalogId // Anda akan menyimpan ObjectId untuk mengacu ke katalog tertentu di sini
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
+    } = req.body;
+
+    // Create a new 'tugas' object using the 'tugasM' model
+    const newjoki = new jokiM({
+      tugas,
+      TugasDetail,
+      tingkat,
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
     });
 
-    const addedTugas = await newTugas.save();
-    res.status(200).json({ message: "Tugas successfully added", addedTugas });
-  } catch (error) {
-    console.error("Error creating tugas:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    // Save the new 'tugas' object to the database
+    const savedjoki = await newjoki.save();
 
-// Route untuk mendapatkan data tugas yang mencakup informasi dari catalog
-app.get("/tugasCatalogData", async (req, res) => {
-  try {
-    const tugasData = await tugasM.find().populate('catalogId', 'nama harga -_id');
+    // Create Snap API instance
+    let snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: 'SB-Mid-server-W4Ac0rt2S614rRGUwb9kwMCO'
+    });
 
-    if (!tugasData || tugasData.length === 0) {
-      return res.status(404).json({ message: "No tugas data found" });
-    }
-
-    // Ambil data nama dan harga dari setiap tugas yang mengacu pada catalog
-    const catalogDataInTugas = tugasData.map(tugas => ({
-      tugas: tugas.tugas,
-      TugasDetail: tugas.TugasDetail,
-      Nama: tugas.Nama,
-      tingkat: tugas.tingkat,
-      catalog: {
-        nama: tugas.catalogId ? tugas.catalogId.nama : null,
-        harga: tugas.catalogId ? tugas.catalogId.harga : null
+    // Prepare transaction information to be stored
+    let parameter = {
+      "transaction_details": {
+        "order_id": savedjoki._id, // Using the _id from the saved 'tugas' document as order_id
+        "gross_amount": parseInt(harga) // Using the 'harga' from the request body as gross_amount
+      },
+      // Customer details from the request body
+      "customer_details": {
+        "first_name": firstName,
+        "last_name": lastName,
+        "email": email,
+        "phone": phone
       }
-    }));
+    };
 
-    res.status(200).json({ catalogDataInTugas });
+    // Create a transaction using Snap API to get the transactionToken
+    const transaction = await snap.createTransaction(parameter);
+    const transactionToken = transaction.token;
+
+    // Log a message in the console when transaction token creation is successful
+    console.log('Transaction token created successfully:', transactionToken);
+
+    // Update the 'transaction' field in the 'tugas' document with the transactionToken
+    await jokiM.findByIdAndUpdate(savedjoki._id, { transaction: transactionToken });
+
+    // Respond with a success message or the newly created task
+    res.status(201).json({ message: 'New task created successfully', task: savedjoki });
   } catch (error) {
-    console.error("Error fetching tugas data:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // Handle any errors that occur during the process
+    res.status(500).json({ message: 'Error creating task or transaction', error: error.message });
   }
 });
 

@@ -13,7 +13,7 @@ const catalogSchema = new mongoose.Schema({
 
   },
   harga: {
-    type: Number,
+    type: String,
     required: true
   }
 });

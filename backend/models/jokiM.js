@@ -1,16 +1,12 @@
 const mongoose = require('mongoose');
 
+// Define the schema for the 'tugas' model
 const tugasSchema = new mongoose.Schema({
   tugas: {
     type: String,
-    required: true,
-    unique: true
-  },
-  TugasDetail: {
-    type: String,
     required: true
   },
-  Nama: {
+  TugasDetail: {
     type: String,
     required: true
   },
@@ -18,13 +14,39 @@ const tugasSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // Menggunakan ObjectId untuk merujuk ke model 'catalog'
-  catalogId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'catalog' // Nama model referensi
+  // Reference to the 'catalog' model
+  nama: {
+    type: String,
+    required: true
+  },
+  transaction   : {
+    type: String,
+   
+  },
+  harga: {
+    type: Number,
+    required: true
+  },
+  // User-related fields
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  phone: {
+    type: String,
+    required: true
   }
 });
 
+// Define the 'tugas' model based on the schema
 const tugasM = mongoose.model('tugas', tugasSchema);
 
 module.exports = tugasM;
