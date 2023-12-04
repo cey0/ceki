@@ -1,3 +1,4 @@
+const midtransClient = require('midtrans-client');
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -8,10 +9,8 @@ const path = require('path');
 const catalog = require("./models/catalogM")
 const multer = require('multer');
 const jokiM = require("./models/jokiM");
-const pembayaranM = require("./models/pembayaranM")
-const axios = require('axios');
-
 const app = express();
+
 
 app.use(express.json());
 app.use(cors());
@@ -61,31 +60,34 @@ const checkSession = (req, res, next) => {
   }
   next(); // Lanjutkan ke rute berikutnya jika sesi ada
 };
-// Route untuk register
 app.post("/signup", async (req, res) => {
   try {
-    const { username, password } = req.body;
-
-    // Check apakah username sudah ada
-    const exist = await userM.findOne({ username });
-
-    if (exist) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
-
-    // Buat user baru menggunakan data dari form
-    const newUser = new userM({
-      username,
-      password
-    });
-
-    const user = await newUser.save();
-    res.status(200).json({ message: "User successfully added", user });
+     const { username, password, role } = req.body;
+ 
+     // Check if the username already exists
+     const exist = await userM.findOne({ username });
+ 
+     if (exist) {
+       return res.status(400).json({ error: "Username already exists", alert: "Username already exists! Please choose another username." });
+     }
+ 
+     // Set a default role if none is provided
+     const defaultRole = role || 'user'; // Set default role to 'user' if not provided
+ 
+     // Create a new user using form data and default role
+     const newUser = new userM({
+       username,
+       password,
+       role: defaultRole
+     });
+ 
+     const user = await newUser.save();
+     res.status(200).json({ message: "User successfully added", user, alert: "Registration successful! You can now login." });
   } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ error: "Internal server error" });
+     console.error("Error creating user:", error);
+     res.status(500).json({ error: "Internal server error", alert: "Failed to register user. Please try again." });
   }
-});
+ });
 
 // Route untuk mengambil semua data user
 app.get("/users", async (req, res) => {
@@ -103,36 +105,58 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// Route untuk login
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Cari user berdasarkan username
+    // Find user based on the username
     const user = await userM.findOne({ username });
 
     if (!user) {
       return res.status(404).json({ error: "Username not found" });
     }
 
-    // Verifikasi password (disarankan menggunakan metode hash dan salt untuk menyimpan dan memeriksa password)
-    // Contoh dengan asumsi menyimpan password dalam plaintext (disarankan menggunakan hash dan salt)
+    // Check password (consider using more secure password handling methods)
     if (user.password !== password) {
       return res.status(401).json({ error: "Invalid password" });
     }
 
-    // Simpan informasi login di sesi
+    // Set session based on user role
     req.session.isLoggedIn = true;
-    req.session.user = user; // Simpan informasi user di sesi jika diperlukan
+    req.session.user = {
+      _id: user._id,
+      username: user.username,
+      role: user.role // Assuming 'role' is defined in the user schema
+    };
 
-    // Jika verifikasi berhasil, arahkan ke halaman dashboard
-    res.redirect("/dashboard");
+    console.log('User role:', user.role);
+
+    // Respond with user data in JSON format
+    res.status(200).json({ user: req.session.user });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+app.get('/dashboard', checkSession, (req, res) => {
+  if (req.session.user.role == "user") {
+     // Jika pengguna sudah login (sesi ada), arahkan ke halaman dashboard
+     res.sendFile(path.join(__dirname, '/../frontend/dashboard.html'));
+  } else {
+     // Jika pengguna belum login, arahkan ke halaman login
+     res.redirect('/login');
+  }
+ });
+ app.get('/admin/dashboard',checkSession, (req, res) => {
+  if (req.session.user.role === "admin") {
+      // Jika pengguna sudah login sebagai admin (sesi ada dan role = admin), arahkan ke halaman dashboard admin
+      res.sendFile(path.join(__dirname, 'dashboard-A.html'));
+  } else {
+      // Jika pengguna belum login sebagai admin, arahkan ke halaman login
+      res.redirect('/login');
+  }
+  });
 app.get('/logout', (req, res) => {
   if (req.session) {
     req.session.destroy((err) => {
@@ -163,16 +187,7 @@ app.get("/login", (req, res) => {
   res.redirect('/login');
 });
 
-// Route untuk mengakses dashboard
-app.get('/dashboard',checkSession, (req, res) => {
-  if (req.session.isLoggedIn) {
-    // Jika pengguna sudah login (sesi ada), arahkan ke halaman dashboard
-    res.sendFile(path.join(__dirname, '/../frontend/dashboard.html'));
-  } else {
-    // Jika pengguna belum login, arahkan ke halaman login
-    res.redirect('/login');
-  }
-});
+
 
 // Mengambil data dari database dan mengirimkan sebagai respons JSON
 app.get("/catalogdata", async (req, res) => {
@@ -204,6 +219,21 @@ app.post("/catalogdata", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+app.delete("/catalogdata/:id", async (req, res) => {
+  try {
+     const catalogId = req.params.id;
+     const deletedCatalog = await catalog.findByIdAndDelete(catalogId);
+ 
+     if (!deletedCatalog) {
+       return res.status(404).json({ message: "Catalog item not found" });
+     }
+ 
+     res.status(200).json({ message: "Catalog item successfully deleted", deletedCatalog });
+  } catch (error) {
+     console.error("Error deleting catalog item:", error);
+     res.status(500).json({ error: "Internal server error" });
+  }
+ });
 // Menambahkan endpoint untuk mengambil data katalog berdasarkan ID
 app.get("/catalogdata/:id", async (req, res) => {
   try {
@@ -220,73 +250,105 @@ app.get("/catalogdata/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-// Route untuk menambahkan tugas baru
-app.post("/addTugas", async (req, res) => {
+// Route for updating a catalog item by ID
+app.put("/catalogdata/:id", async (req, res) => {
   try {
-    const { tugas, TugasDetail, Nama, tingkat, catalogId } = req.body;
+    const catalogId = req.params.id;
+    const { nama, desk, harga } = req.body;
 
-    // Buat tugas baru menggunakan data dari form
-    const newTugas = new jokiM({
-      tugas,
-      TugasDetail,
-      Nama,
-      tingkat,
-      catalogId // Anda akan menyimpan ObjectId untuk mengacu ke katalog tertentu di sini
-    });
+    // Find the catalog item by ID and update its data
+    const updatedCatalog = await catalog.findByIdAndUpdate(
+      catalogId,
+      { nama, desk, harga },
+      { new: true } // Return the updated document
+    );
 
-    const addedTugas = await newTugas.save();
-    res.status(200).json({ message: "Tugas successfully added", addedTugas });
-  } catch (error) {
-    console.error("Error creating tugas:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Route untuk mendapatkan data tugas yang mencakup informasi dari catalog
-app.get("/tugasCatalogData", async (req, res) => {
-  try {
-    const tugasData = await tugasM.find().populate('catalogId', 'nama harga -_id');
-
-    if (!tugasData || tugasData.length === 0) {
-      return res.status(404).json({ message: "No tugas data found" });
+    if (!updatedCatalog) {
+      return res.status(404).json({ message: "Catalog item not found" });
     }
 
-    // Ambil data nama dan harga dari setiap tugas yang mengacu pada catalog
-    const catalogDataInTugas = tugasData.map(tugas => ({
-      tugas: tugas.tugas,
-      TugasDetail: tugas.TugasDetail,
-      Nama: tugas.Nama,
-      tingkat: tugas.tingkat,
-      catalog: {
-        nama: tugas.catalogId ? tugas.catalogId.nama : null,
-        harga: tugas.catalogId ? tugas.catalogId.harga : null
-      }
-    }));
-
-    res.status(200).json({ catalogDataInTugas });
+    res.status(200).json({ message: "Catalog item updated successfully", updatedCatalog });
   } catch (error) {
-    console.error("Error fetching tugas data:", error);
+    console.error("Error updating catalog item:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
-const clientId = 'e25465ea-dd6a-34a5-abc9-9f6e76655804';
-const clientSecret = 'ZK5qxnQfhmUaNaLEM7C5zMrdw2UHDZY5rzO12FWd';
 
-axios.post('https://api.yukk.me/v2/oauth/token', {
-  grant_type: 'client_credentials',
-  client_id: clientId,
-  client_secret: clientSecret
-}, {
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
+app.post("/addjoki", async (req, res) => {
+  try {
+    const {
+      tugas,
+      TugasDetail,
+      tingkat,
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
+    } = req.body;
+
+    // Validation checks for required fields can be added here...
+
+    const newjoki = new jokiM({
+      tugas,
+      TugasDetail,
+      tingkat,
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
+    });
+
+    const savedjoki = await newjoki.save();
+
+    if (!savedjoki) {
+      return res.status(500).json({ message: 'Failed to save task' });
+    }
+
+    console.log('Saved joki ID:', savedjoki._id);
+
+    let snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: 'SB-Mid-server-W4Ac0rt2S614rRGUwb9kwMCO'
+    });
+
+    let parameter = {
+      "transaction_details": {
+        "order_id": savedjoki._id,
+        "gross_amount": parseInt(harga)
+      },
+      "customer_details": {
+        "first_name": firstName,
+        "last_name": lastName,
+        "email": email,
+        "phone": phone
+      }
+    };
+
+    const transaction = await snap.createTransaction(parameter);
+    const transactionToken = transaction.token;
+
+    console.log('Transaction token created successfully:', transactionToken);
+
+    // Update jokiM document with transaction token
+    await jokiM.findByIdAndUpdate(savedjoki._id, { transaction: transactionToken });
+
+    // Include the transaction field in the response
+    res.status(201).json({ message: 'New task created successfully', task: { ...savedjoki.toObject(), transaction: transactionToken } });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating task or transaction', error: error.message });
   }
-})
-.then(response => {
-  console.log('Access token:', response.data.access_token);
-})
-.catch(error => {
-  console.error('Error:', error);
 });
+
 module.exports = app;
+
+
+
+
+
+
+
+

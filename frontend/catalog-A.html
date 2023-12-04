@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Catalog Data</title>
+ <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+ <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+ </style>
+</head>
+<body>
+ <h1>Catalog Data</h1>
+ <table id="catalogTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Price</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- Data will be populated here -->
+    </tbody>
+ </table>
+
+ <script>
+    async function fetchData() {
+      try {
+        const response = await axios.get("http://localhost:3000/catalogdata");
+        const catalogs = response.data;
+
+        let tableBody = document.getElementById("tableBody");
+        tableBody.innerHTML = "";
+
+        catalogs.forEach(catalog => {
+          let row = tableBody.insertRow();
+          row.insertCell().innerText = catalog._id;
+          row.insertCell().innerText = catalog.nama;
+          row.insertCell().innerText = catalog.desk;
+          row.insertCell().innerText = catalog.harga;
+        });
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    fetchData(); // Call the function to populate the table
+ </script>
+</body>
+</html>
