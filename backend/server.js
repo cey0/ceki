@@ -250,6 +250,7 @@ app.get("/catalogdata/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+<<<<<<< Updated upstream
 // Route for updating a catalog item by ID
 app.put("/catalogdata/:id", async (req, res) => {
   try {
@@ -343,6 +344,77 @@ app.post("/addjoki", async (req, res) => {
   }
 });
 
+=======
+app.post("/addjoki", async (req, res) => {
+  try {
+    const {
+      tugas,
+      TugasDetail,
+      tingkat,
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
+    } = req.body;
+
+    // Validation checks for required fields can be added here...
+
+    const newjoki = new jokiM({
+      tugas,
+      TugasDetail,
+      tingkat,
+      firstName,
+      lastName,
+      email,
+      phone,
+      nama,
+      harga
+    });
+
+    const savedjoki = await newjoki.save();
+
+    if (!savedjoki) {
+      return res.status(500).json({ message: 'Failed to save task' });
+    }
+
+    console.log('Saved joki ID:', savedjoki._id);
+
+    let snap = new midtransClient.Snap({
+      isProduction: false,
+      serverKey: 'SB-Mid-server-W4Ac0rt2S614rRGUwb9kwMCO'
+    });
+
+    let parameter = {
+      "transaction_details": {
+        "order_id": savedjoki._id,
+        "gross_amount": parseInt(harga)
+      },
+      "customer_details": {
+        "first_name": firstName,
+        "last_name": lastName,
+        "email": email,
+        "phone": phone
+      }
+    };
+
+    const transaction = await snap.createTransaction(parameter);
+    const transactionToken = transaction.token;
+
+    console.log('Transaction token created successfully:', transactionToken);
+
+    // Update jokiM document with transaction token
+    await jokiM.findByIdAndUpdate(savedjoki._id, { transaction: transactionToken });
+
+    // Include the transaction field in the response
+    res.status(201).json({ message: 'New task created successfully', task: { ...savedjoki.toObject(), transaction: transactionToken } });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating task or transaction', error: error.message });
+  }
+});
+
+>>>>>>> Stashed changes
 module.exports = app;
 
 
